@@ -26,6 +26,9 @@ switch (command) {
             music(input);
         });
         break;
+    case "concert-this":
+
+        break;
 }
 
 function music(songName) {
@@ -44,7 +47,7 @@ function music(songName) {
 }
 
 function movies(movieName) {
-    if (movieName <= 0) {
+    if (movieName.length <= 0) {
         movieName = "Mr. Nobody";
     }
     axios.get("http://www.omdbapi.com/?t=" + movieName + "&y=&plot=short&apikey=trilogy").then(
