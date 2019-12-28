@@ -1,11 +1,15 @@
 require("dotenv").config();
 var keys = require("./keys.js");
+var options = require("./geo-setup");
+var nodeGeoCoder = require('node-geocoder');
+var geocoder = nodeGeoCoder(options.option);
 var axios = require("axios");
 var userInput = process.argv.slice(3).join(" ");
 var command = process.argv[2];
 var fs = require("fs");
 var Spotify = require('node-spotify-api');
 var spotify = new Spotify(keys.spotify);
+var moment = require('moment')
 
 switch (command) {
     case "song-search":
@@ -27,8 +31,30 @@ switch (command) {
         });
         break;
     case "concert-this":
-
+        concert(userInput);
         break;
+}
+
+function concert(bandName) {
+    if (bandName.length <= 0) {
+        bandName = "eagles";
+    }
+    axios.get(" https://rest.bandsintown.com/artists/" + bandName + "/events?app_id=codingbootcamp").then(
+        function(response) {
+
+            console.log("The Artist: " + response.data[0].artist.name);
+            console.log("The Venue: " + response.data[0].venue.name);
+            console.log("The City: " + response.data[0].venue.city);
+            geocoder.reverse({ lat: response.data[0].venue.latitude, lon: response.data[0].venue.longitude }, function(err, res) {
+                console.log("The Address: " + res[0].streetName);
+                console.log("The ZipCode: " + res[0].zipcode);
+                console.log("The State: " + res[0].stateCode);
+                console.log("The Date and Time: " + moment(response.data[0].datetime).format("lll"));
+            });
+
+
+        }
+    )
 }
 
 function music(songName) {
