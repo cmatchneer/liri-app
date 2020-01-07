@@ -4,36 +4,71 @@ var options = require("./geo-setup");
 var nodeGeoCoder = require('node-geocoder');
 var geocoder = nodeGeoCoder(options.option);
 var axios = require("axios");
-var userInput = process.argv.slice(3).join(" ");
-var command = process.argv[2];
 var fs = require("fs");
 var Spotify = require('node-spotify-api');
 var spotify = new Spotify(keys.spotify);
-var moment = require('moment')
+var moment = require('moment');
+var inquirer = require("inquirer");
+var areYouDone = false;
+liri();
 
-switch (command) {
-    case "song-search":
-        music(userInput);
+function liri() {
+    if (areYouDone === false) {
 
-        break;
-    case "movie-this":
-        movies(userInput);
-        break;
+        inquirer.prompt([{
+                type: "list",
+                message: "pick a command",
+                choices: ["song search", "movie this", "do what it says", "concert this"],
+                name: "command"
 
-    case "do-what-it-says":
-        fs.readFile("random.txt", "utf8", function(error, data) {
-            if (error) {
-                return console.log(error);
+            },
+            {
+                type: "input",
+                message: "Search a song, movie or band depending on your command choice. If you selected the third command then leave this blank ",
+                name: "userInput"
+            },
+            {
+                type: "confirm",
+                message: "do you want to do another search?",
+                name: "done",
+                default: false
             }
-            var cpuInput = data.split(",");
-            var input = cpuInput[1];
-            music(input);
-        });
-        break;
-    case "concert-this":
-        concert(userInput);
-        break;
+        ]).then(function(response) {
+
+            switch (response.command) {
+                case "song search":
+                    music(response.userInput);
+
+                    break;
+                case "movie this":
+                    movies(response.userInput);
+                    break;
+
+                case "do what it says":
+                    fs.readFile("random.txt", "utf8", function(error, data) {
+                        if (error) {
+                            return console.log(error);
+                        }
+                        var cpuInput = data.split(",");
+                        var input = cpuInput[1];
+                        music(input);
+                    });
+                    break;
+                case "concert this":
+                    concert(response.userInput);
+                    break;
+            }
+            if (!response.done) {
+                areYouDone = true;
+            } else {
+                liri();
+            }
+
+        })
+
+    }
 }
+
 
 function concert(bandName) {
     if (bandName.length <= 0) {
@@ -42,14 +77,14 @@ function concert(bandName) {
     axios.get(" https://rest.bandsintown.com/artists/" + bandName + "/events?app_id=codingbootcamp").then(
         function(response) {
 
-            console.log("The Artist: " + response.data[0].artist.name);
-            console.log("The Venue: " + response.data[0].venue.name);
-            console.log("The City: " + response.data[0].venue.city);
+            console.log('\n', "The Artist: " + response.data[0].artist.name, '\n');
+            console.log('\n', "The Venue: " + response.data[0].venue.name, '\n');
+            console.log('\n', "The City: " + response.data[0].venue.city, '\n');
             geocoder.reverse({ lat: response.data[0].venue.latitude, lon: response.data[0].venue.longitude }, function(err, res) {
-                console.log("The Address: " + res[0].streetName);
-                console.log("The ZipCode: " + res[0].zipcode);
-                console.log("The State: " + res[0].stateCode);
-                console.log("The Date and Time: " + moment(response.data[0].datetime).format("lll"));
+                console.log('\n', "The Address: " + res[0].streetName, '\n');
+                console.log('\n', "The ZipCode: " + res[0].zipcode), '\n';
+                console.log('\n', "The State: " + res[0].stateCode, '\n');
+                console.log('\n', "The Date and Time: " + moment(response.data[0].datetime).format("lll"), '\n');
             });
 
 
@@ -65,10 +100,10 @@ function music(songName) {
         if (err) {
             return console.log('Error occurred: ' + err);
         }
-        console.log("Song Name: " + data.tracks.items[0].name);
-        console.log("Album: " + data.tracks.items[0].album.name);
-        console.log("Artist Name: " + data.tracks.items[0].artists[0].name);
-        console.log("Link to the Song: " + data.tracks.items[0].external_urls.spotify);
+        console.log('\n', "Song Name: " + data.tracks.items[0].name, '\n');
+        console.log('\n', "Album: " + data.tracks.items[0].album.name, '\n');
+        console.log('\n', "Artist Name: " + data.tracks.items[0].artists[0].name, '\n');
+        console.log('\n', "Link to the Song: " + data.tracks.items[0].external_urls.spotify, '\n');
     });
 }
 
@@ -78,14 +113,14 @@ function movies(movieName) {
     }
     axios.get("http://www.omdbapi.com/?t=" + movieName + "&y=&plot=short&apikey=trilogy").then(
             function(response) {
-                console.log("Movie Title: " + response.data.Title);
-                console.log("Release Date: " + response.data.Released);
-                console.log("Actors: " + response.data.Actors.split(","));
-                console.log("Plot: " + response.data.Plot);
-                console.log(response.data.Ratings[1].Source + ": " + response.data.Ratings[1].Value);
-                console.log("imdb Rating: " + response.data.imdbRating);
-                console.log("Made in: " + response.data.Country);
-                console.log("Language: " + response.data.Language);
+                console.log('\n', "Movie Title: " + response.data.Title, '\n');
+                console.log('\n', "Release Date: " + response.data.Released, '\n');
+                console.log('\n', "Actors: " + response.data.Actors.split(","), '\n');
+                console.log('\n', "Plot: " + response.data.Plot, '\n');
+                console.log('\n', response.data.Ratings[1].Source + ": " + response.data.Ratings[1].Value, '\n');
+                console.log('\n', "imdb Rating: " + response.data.imdbRating, '\n');
+                console.log('\n', "Made in: " + response.data.Country, '\n');
+                console.log('\n', "Language: " + response.data.Language, '\n');
             })
         .catch(function(error) {
             if (error.response) {
